@@ -14,17 +14,23 @@ impl IntentUnderstandingAgent {
         info!("IntentUnderstandingAgent: Analyzing intent for: '{}'", input);
         let query_lower = input.trim().to_lowercase();
 
-        // 1. Guard against SQL Injection / Destructive Attacks
-        if query_lower.contains("drop ")
-            || query_lower.contains("delete ")
-            || query_lower.contains("update ")
-            || query_lower.contains("insert ")
-            || query_lower.contains("alter ")
-            || query_lower.contains("truncate ")
+        // 1. Immediate Security & DDL/DML Mutation Guard: Block raw SQL commands or SQL injection syntax
+        if query_lower.starts_with("drop ")
+            || query_lower.starts_with("delete ")
+            || query_lower.starts_with("update ")
+            || query_lower.starts_with("insert ")
+            || query_lower.starts_with("alter ")
+            || query_lower.starts_with("truncate ")
+            || query_lower.contains("drop table")
+            || query_lower.contains("drop database")
+            || query_lower.contains("delete from")
+            || query_lower.contains("insert into")
+            || query_lower.contains("alter table")
+            || query_lower.contains("truncate table")
             || query_lower.contains("--")
             || query_lower.contains("/*")
         {
-            info!("Security Alert: Malicious SQL injection attempt detected in natural language input.");
+            info!("Security Alert: DDL/DML SQL mutation or command structure detected in input.");
             return QueryIntent {
                 raw_query: input.to_string(),
                 is_voice_input: is_voice,
@@ -44,7 +50,9 @@ impl IntentUnderstandingAgent {
             || query_lower.contains("reason for")
             || query_lower.contains("root cause")
             || query_lower.contains("decrease")
-            || query_lower.contains("drop")
+            || query_lower.contains("sales drop")
+            || query_lower.contains("revenue drop")
+            || query_lower.contains("drop in")
             || query_lower.contains("down")
             || query_lower.contains("decline")
             || query_lower.contains("fall")
@@ -75,10 +83,13 @@ impl IntentUnderstandingAgent {
             || query_lower.contains("growth rate")
             || query_lower.contains("sales performance")
             || query_lower.contains("sales")
+            || query_lower.contains("slaes")
             || query_lower.contains("revenue")
+            || query_lower.contains("revanue")
             || query_lower.contains("order")
             || query_lower.contains("region")
             || query_lower.contains("amount")
+            || query_lower.contains("tredn")
         {
             return QueryIntent {
                 raw_query: input.to_string(),

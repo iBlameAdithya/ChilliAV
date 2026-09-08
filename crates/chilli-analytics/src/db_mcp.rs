@@ -85,20 +85,29 @@ impl SqliteMcpConnector {
             [],
         )?;
 
-        // Seed CRM leads for current month (2026-09)
+        // Seed CRM leads across multiple months, reps, and industries
         let crm_data = vec![
             ("Acme Corp", "Tech Solutions", "Qualified", 15000.0, "Alice", "2026-09"),
             ("Stark Industries", "Defence", "Proposal", 45000.0, "Bob", "2026-09"),
             ("Wayne Enterprises", "Finance", "Won", 60000.0, "Charlie", "2026-09"),
-            ("Cyberdyne", "AI Hardware", "New", 25000.0, "Alice", "2026-09"),
+            ("Cyberdyne Systems", "AI Hardware", "New", 25000.0, "Alice", "2026-09"),
             ("Umbrella Corp", "BioTech", "Lost", 12000.0, "Bob", "2026-09"),
-            ("Globex", "Logistics", "Qualified", 18000.0, "Charlie", "2026-09"),
-            ("Initech", "Software", "Proposal", 30000.0, "Alice", "2026-09"),
+            ("Globex Logistics", "Logistics", "Qualified", 18000.0, "Charlie", "2026-09"),
+            ("Initech Software", "Software", "Proposal", 30000.0, "Alice", "2026-09"),
             ("Massive Dynamic", "Research", "New", 22000.0, "Bob", "2026-09"),
-            ("Hooli", "Cloud", "Won", 85000.0, "Charlie", "2026-09"),
+            ("Hooli Cloud", "Cloud Services", "Won", 85000.0, "Charlie", "2026-09"),
             ("Pied Piper", "Compression", "Qualified", 40000.0, "Alice", "2026-09"),
-            ("Aperture Labs", "Robotics", "Proposal", 35000.0, "Bob", "2026-09"),
-            ("Black Mesa", "Energy", "Lost", 28000.0, "Charlie", "2026-09"),
+            ("Aperture Robotics", "Robotics", "Proposal", 35000.0, "Bob", "2026-09"),
+            ("Black Mesa Energy", "Energy", "Lost", 28000.0, "Charlie", "2026-09"),
+            ("Tyrell Corp", "Synthetic Bio", "Won", 120000.0, "David", "2026-08"),
+            ("Soylent Corp", "Food Supply", "Qualified", 45000.0, "Emma", "2026-08"),
+            ("Weyland-Yutani", "Deep Space Mining", "Proposal", 95000.0, "David", "2026-08"),
+            ("Oscorp Tech", "Biopharmaceuticals", "Won", 78000.0, "Emma", "2026-08"),
+            ("LexCorp International", "Aerospace", "Lost", 55000.0, "David", "2026-08"),
+            ("Pearson Specter", "Legal Services", "Qualified", 32000.0, "Emma", "2026-08"),
+            ("Sterling Cooper", "Media Advertising", "Won", 64000.0, "Alice", "2026-07"),
+            ("Dunder Mifflin", "Paper Solutions", "Lost", 8000.0, "Bob", "2026-07"),
+            ("Monsters Inc", "Clean Energy", "Proposal", 51000.0, "Charlie", "2026-07"),
         ];
 
         for (contact, comp, stat, val, agent, mth) in crm_data {
@@ -122,20 +131,36 @@ impl SqliteMcpConnector {
             [],
         )?;
 
-        // Seed 12 months of sales trend (last 12 months up to 2026-09)
+        // Seed 12 months of multi-region, multi-category sales transactions
         let sales_trend = vec![
-            ("2025-10", "North America", "Software", 120000.0),
-            ("2025-11", "North America", "Software", 135000.0),
-            ("2025-12", "North America", "Software", 160000.0),
-            ("2026-01", "North America", "Software", 140000.0),
-            ("2026-02", "North America", "Software", 148000.0),
-            ("2026-03", "North America", "Software", 155000.0),
-            ("2026-04", "North America", "Software", 162000.0),
-            ("2026-05", "North America", "Software", 170000.0),
-            ("2026-06", "North America", "Software", 185000.0),
-            ("2026-07", "North America", "Software", 190000.0),
-            ("2026-08", "North America", "Software", 110000.0), // Major Drop last month!
-            ("2026-09", "North America", "Software", 175000.0),
+            ("2025-10", "North America", "Enterprise Software", 120000.0),
+            ("2025-10", "Europe", "Cloud Storage", 45000.0),
+            ("2025-10", "Asia-Pacific", "Support Services", 30000.0),
+            ("2025-11", "North America", "Enterprise Software", 135000.0),
+            ("2025-11", "Europe", "Cloud Storage", 48000.0),
+            ("2025-11", "Latin America", "AI Hardware", 22000.0),
+            ("2025-12", "North America", "Enterprise Software", 160000.0),
+            ("2025-12", "Europe", "Cloud Storage", 55000.0),
+            ("2025-12", "Asia-Pacific", "Support Services", 38000.0),
+            ("2026-01", "North America", "Enterprise Software", 140000.0),
+            ("2026-01", "Europe", "Cloud Storage", 42000.0),
+            ("2026-02", "North America", "Enterprise Software", 148000.0),
+            ("2026-02", "Asia-Pacific", "AI Hardware", 35000.0),
+            ("2026-03", "North America", "Enterprise Software", 155000.0),
+            ("2026-03", "Europe", "Cloud Storage", 50000.0),
+            ("2026-04", "North America", "Enterprise Software", 162000.0),
+            ("2026-04", "Latin America", "Support Services", 28000.0),
+            ("2026-05", "North America", "Enterprise Software", 170000.0),
+            ("2026-05", "Europe", "Cloud Storage", 52000.0),
+            ("2026-06", "North America", "Enterprise Software", 185000.0),
+            ("2026-06", "Asia-Pacific", "AI Hardware", 40000.0),
+            ("2026-07", "North America", "Enterprise Software", 190000.0),
+            ("2026-07", "Europe", "Cloud Storage", 58000.0),
+            ("2026-08", "North America", "Enterprise Software", 110000.0), // Major Drop last month!
+            ("2026-08", "Europe", "Cloud Storage", 25000.0),
+            ("2026-09", "North America", "Enterprise Software", 175000.0),
+            ("2026-09", "Europe", "Cloud Storage", 54000.0),
+            ("2026-09", "Asia-Pacific", "Support Services", 41000.0),
         ];
 
         for (mth, reg, cat, amt) in sales_trend {
@@ -160,9 +185,13 @@ impl SqliteMcpConnector {
 
         let marketing_data = vec![
             ("2026-06", "Digital Ads", 50000.0, 450),
+            ("2026-06", "Search Ads", 25000.0, 210),
             ("2026-07", "Digital Ads", 55000.0, 490),
+            ("2026-07", "Search Ads", 28000.0, 230),
             ("2026-08", "Digital Ads", 18000.0, 140), // Major Spend Cut in 2026-08!
+            ("2026-08", "Search Ads", 10000.0, 85),
             ("2026-09", "Digital Ads", 52000.0, 460),
+            ("2026-09", "Search Ads", 27000.0, 225),
         ];
 
         for (mth, ch, spend, leads) in marketing_data {
@@ -183,10 +212,20 @@ impl SqliteMcpConnector {
             [],
         )?;
 
-        conn.execute(
-            "INSERT INTO erp_inventory (sku, product_name, stock_out_events, month) VALUES ('SKU-100', 'Enterprise Analytics Suite', 42, '2026-08')",
-            [],
-        )?;
+        let inventory_data = vec![
+            ("SKU-100", "Enterprise Analytics Suite", 42, "2026-08"),
+            ("SKU-101", "Cloud Infrastructure Connector", 5, "2026-08"),
+            ("SKU-102", "AI Model Accelerator License", 18, "2026-08"),
+            ("SKU-103", "Data Pipeline ETL Server", 2, "2026-08"),
+            ("SKU-104", "Security Guard Gateway", 0, "2026-08"),
+        ];
+
+        for (sku, name, stock_outs, mth) in inventory_data {
+            conn.execute(
+                "INSERT INTO erp_inventory (sku, product_name, stock_out_events, month) VALUES (?1, ?2, ?3, ?4)",
+                rusqlite::params![sku, name, stock_outs, mth],
+            )?;
+        }
 
         // 5. HRMS Employees table
         conn.execute(
@@ -201,10 +240,25 @@ impl SqliteMcpConnector {
             [],
         )?;
 
-        conn.execute(
-            "INSERT INTO hrms_employees (name, department, role, salary, performance_score) VALUES ('Sarah Conner', 'Sales', 'Account Exec', 85000.0, 4.8), ('John Doe', 'Engineering', 'Developer', 95000.0, 4.5)",
-            [],
-        )?;
+        let hrms_data = vec![
+            ("Sarah Conner", "Sales", "Account Executive", 85000.0, 4.8),
+            ("John Doe", "Engineering", "Principal Developer", 95000.0, 4.5),
+            ("Alice Smith", "Sales", "Sales Director", 115000.0, 4.9),
+            ("Bob Johnson", "Engineering", "DevOps Engineer", 88000.0, 4.2),
+            ("Charlie Brown", "Finance", "Financial Analyst", 78000.0, 4.4),
+            ("Diana Prince", "Marketing", "CMO", 130000.0, 4.9),
+            ("Bruce Wayne", "Executive", "Managing Director", 180000.0, 5.0),
+            ("Clark Kent", "Marketing", "Content Strategist", 72000.0, 4.3),
+            ("Barry Allen", "Engineering", "Backend Architect", 105000.0, 4.7),
+            ("Arthur Curry", "Operations", "Logistics Lead", 81000.0, 4.1),
+        ];
+
+        for (name, dept, role, sal, perf) in hrms_data {
+            conn.execute(
+                "INSERT INTO hrms_employees (name, department, role, salary, performance_score) VALUES (?1, ?2, ?3, ?4, ?5)",
+                rusqlite::params![name, dept, role, sal, perf],
+            )?;
+        }
 
         Ok(())
     }

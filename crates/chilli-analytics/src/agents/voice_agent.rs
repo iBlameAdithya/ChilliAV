@@ -15,21 +15,30 @@ impl VoiceProcessingAgent {
         info!("VoiceProcessingAgent: Processing input (is_voice={})", is_voice);
         let trimmed = raw_input.trim();
 
-        if !is_voice {
-            return (trimmed.to_string(), false);
-        }
+        // Perform common typo normalization for both text & voice inputs
+        let mut cleaned = trimmed
+            .replace("slaes", "sales")
+            .replace("revanue", "revenue")
+            .replace("tredn", "trend")
+            .replace("custmer", "customer")
+            .replace("invetory", "inventory")
+            .replace("leadz", "leads")
+            .replace("pipline", "pipeline")
+            .replace("salaries", "salary");
 
-        // Clean speech transcripts: remove filler words, normalize spoken terms and enterprise domain jargon
-        let cleaned = trimmed
-            .replace("um", "")
-            .replace("uh", "")
-            .replace("please show me", "Show")
-            .replace("can you display", "Show")
-            .replace("dist", "distribution")
-            .replace("last year", "for the last year")
-            .replace("this mth", "this month")
-            .replace("SK U hundred", "SKU-100")
-            .replace("SKU hundred", "SKU-100");
+        if is_voice {
+            // Clean speech transcripts: remove filler words, normalize spoken terms
+            cleaned = cleaned
+                .replace("um", "")
+                .replace("uh", "")
+                .replace("please show me", "Show")
+                .replace("can you display", "Show")
+                .replace("dist", "distribution")
+                .replace("last year", "for the last year")
+                .replace("this mth", "this month")
+                .replace("SK U hundred", "SKU-100")
+                .replace("SKU hundred", "SKU-100");
+        }
 
         // Format casing
         let mut chars = cleaned.chars();
@@ -38,7 +47,8 @@ impl VoiceProcessingAgent {
             Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
         };
 
-        info!("VoiceProcessingAgent: Transcribed & normalized voice query -> '{}'", normalized);
-        (normalized, true)
+        info!("VoiceProcessingAgent: Transcribed & normalized query -> '{}'", normalized);
+        (normalized, is_voice)
     }
 }
+

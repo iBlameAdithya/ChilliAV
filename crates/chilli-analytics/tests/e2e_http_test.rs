@@ -33,6 +33,33 @@ async fn test_http_query_irrelevant_query_not_enough_data() {
 }
 
 #[tokio::test]
+async fn test_http_query_drop_table_rejected() {
+    let app = ApiServer::router().expect("Failed to create router");
+    let req_payload = serde_json::json!({
+        "query": "drop table crm_leads;",
+        "is_voice": false
+    });
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/query")
+                .method("POST")
+                .header("content-type", "application/json")
+                .body(Body::from(req_payload.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["success"], false);
+    assert_eq!(json["message"], "Not enough data to be processed");
+}
+
+#[tokio::test]
 async fn test_http_voice_endpoint_phase_4() {
     let app = ApiServer::router().expect("Failed to create router");
     let req_payload = serde_json::json!({
