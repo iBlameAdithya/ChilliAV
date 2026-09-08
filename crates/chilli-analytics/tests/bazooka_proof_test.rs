@@ -28,4 +28,8 @@ fn test_bazooka_proof_security_and_unknown_handling() {
     // 6. Valid Voice filler query -> Must succeed cleanly
     let res_voice = orchestrator.execute_query("um uh show me lead status distribution please", true);
     assert!(res_voice.is_ok(), "Valid voice query must succeed");
+
+    // 7. Arbitrary typo query ('slaaes') -> Must be recovered by Fuzzy Typo Guard & succeed
+    let res_typo = orchestrator.execute_query("Show me monthly slaaes trend for last year", false);
+    assert!(res_typo.is_ok(), "Typo query 'slaaes' must be recovered and succeed");
 }

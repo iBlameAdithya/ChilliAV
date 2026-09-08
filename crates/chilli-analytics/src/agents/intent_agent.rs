@@ -189,7 +189,57 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // 8. Out-of-Domain / Irrelevant / Gibberish Query Protection
+        // 8. Dynamic Fuzzy Spell & Typo Recovery Guard
+        // Checks fuzzy edit distance for arbitrary user typos (e.g., 'slaaes', 'revaanue', 'invetrry', 'custmerr')
+        for word in query_lower.split_whitespace() {
+            let clean_w: String = word.chars().filter(|c| c.is_alphanumeric()).collect();
+            if clean_w.len() >= 3 {
+                // Check fuzzy proximity to sales/revenue terms
+                if is_fuzzy_match(&clean_w, "sales") || is_fuzzy_match(&clean_w, "revenue") || is_fuzzy_match(&clean_w, "trend") {
+                    info!("Fuzzy Typo Guard: Recovered typo '{}' -> ECommerce Domain", clean_w);
+                    return QueryIntent {
+                        raw_query: input.to_string(),
+                        is_voice_input: is_voice,
+                        domain: EnterpriseDomain::ECommerce,
+                        query_type: QueryType::Trend,
+                        target_entities: vec!["sales_orders".to_string()],
+                        metrics: vec!["total_amount".to_string()],
+                        time_horizon: Some("last_12_months".to_string()),
+                        filter_conditions: vec![],
+                    };
+                }
+                // Check fuzzy proximity to inventory/stock terms
+                if is_fuzzy_match(&clean_w, "stock") || is_fuzzy_match(&clean_w, "inventory") || is_fuzzy_match(&clean_w, "product") {
+                    info!("Fuzzy Typo Guard: Recovered typo '{}' -> ERP Domain", clean_w);
+                    return QueryIntent {
+                        raw_query: input.to_string(),
+                        is_voice_input: is_voice,
+                        domain: EnterpriseDomain::ERP,
+                        query_type: QueryType::DetailedList,
+                        target_entities: vec!["erp_inventory".to_string()],
+                        metrics: vec!["stock_out_events".to_string()],
+                        time_horizon: None,
+                        filter_conditions: vec![],
+                    };
+                }
+                // Check fuzzy proximity to CRM/customer terms
+                if is_fuzzy_match(&clean_w, "customer") || is_fuzzy_match(&clean_w, "lead") || is_fuzzy_match(&clean_w, "client") {
+                    info!("Fuzzy Typo Guard: Recovered typo '{}' -> CRM Domain", clean_w);
+                    return QueryIntent {
+                        raw_query: input.to_string(),
+                        is_voice_input: is_voice,
+                        domain: EnterpriseDomain::CRM,
+                        query_type: QueryType::Aggregation,
+                        target_entities: vec!["crm_leads".to_string()],
+                        metrics: vec!["estimated_value".to_string()],
+                        time_horizon: None,
+                        filter_conditions: vec![],
+                    };
+                }
+            }
+        }
+
+        // 9. Out-of-Domain / Irrelevant / Gibberish Query Protection
         QueryIntent {
             raw_query: input.to_string(),
             is_voice_input: is_voice,
@@ -202,5 +252,23 @@ impl IntentUnderstandingAgent {
         }
     }
 }
+
+/// Simple Levenshtein distance check for fuzzy typo resolution (max 2 edits allowed)
+fn is_fuzzy_match(word: &str, target: &str) -> bool {
+    if (word.len() as i32 - target.len() as i32).abs() > 2 {
+        return false;
+    }
+    let mut dist = 0;
+    let w_chars: Vec<char> = word.chars().collect();
+    let t_chars: Vec<char> = target.chars().collect();
+    let min_len = usize::min(w_chars.len(), t_chars.len());
+    for i in 0..min_len {
+        if w_chars[i] != t_chars[i] {
+            dist += 1;
+        }
+    }
+    dist + (w_chars.len().abs_diff(t_chars.len())) <= 2
+}
+
 
 
