@@ -374,6 +374,7 @@ impl McpDatabaseConnector for PostgresMcpConnector {
 }
 
 /// Main Enterprise Database Manager wrapping McpDatabaseConnector
+#[derive(Clone)]
 pub struct EnterpriseDbManager {
     connector: Arc<dyn McpDatabaseConnector>,
 }

@@ -79,22 +79,53 @@ impl AnalyticsMultiAgentOrchestrator {
         let sql_payload = self.sql_gen_agent.generate_sql(&intent, &schema)?;
         info!("Step 4 [SQL Generation Agent] ({:.2} ms): Generated Primary SQL: '{}'", t4.elapsed().as_secs_f64() * 1000.0, sql_payload.primary_sql);
 
-        // Step 5: SQL Validation Agent
+        // Step 5: SQL Validation & Data Execution (Fan-Out Agent Pattern)
         let t5 = Instant::now();
         let validated_primary_sql = self.sql_val_agent.validate_sql(&sql_payload.primary_sql, &schema)?;
         info!("Step 5 [SQL Validation Agent] ({:.2} ms): Primary SQL query validated successfully.", t5.elapsed().as_secs_f64() * 1000.0);
 
         let t5b = Instant::now();
         let primary_result = self.db_manager.execute_sql(&validated_primary_sql)?;
-        info!("Step 5b [Data Execution Layer] ({:.2} ms): Executed query, retrieved {} rows", t5b.elapsed().as_secs_f64() * 1000.0, primary_result.row_count);
+        info!("Step 5b [Data Execution Layer] ({:.2} ms): Primary dataset query executed, retrieved {} rows", t5b.elapsed().as_secs_f64() * 1000.0, primary_result.row_count);
 
+        let t_fanout = Instant::now();
         let mut auxiliary_results: Vec<(String, SqlExecutionResult)> = Vec::new();
-        for (label, aux_sql) in sql_payload.auxiliary_sqls {
-            if let Ok(val_aux) = self.sql_val_agent.validate_sql(&aux_sql, &schema) {
-                if let Ok(res) = self.db_manager.execute_sql(&val_aux) {
-                    auxiliary_results.push((label, res));
-                }
+        if !sql_payload.auxiliary_sqls.is_empty() {
+            info!("⚡ [Fan-Out Swarm Agent Engine]: Fanning out {} cross-domain sub-agent queries in parallel...", sql_payload.auxiliary_sqls.len());
+
+            // Parallel Fan-Out Execution of cross-domain diagnostic sub-queries
+            use std::sync::{Arc, Mutex};
+            use std::thread;
+
+            let aux_results = Arc::new(Mutex::new(Vec::new()));
+            let mut handles = Vec::new();
+
+            for (label, aux_sql) in sql_payload.auxiliary_sqls {
+                let db_manager = self.db_manager.clone();
+                let sql_val_agent = SqlValidationAgent::new();
+                let schema = schema.clone();
+                let aux_results = Arc::clone(&aux_results);
+
+                let handle = thread::spawn(move || {
+                    let sub_t = Instant::now();
+                    if let Ok(val_aux) = sql_val_agent.validate_sql(&aux_sql, &schema) {
+                        if let Ok(res) = db_manager.execute_sql(&val_aux) {
+                            info!("   ↳ [Sub-Agent Worker: '{}'] ({:.2} ms): Completed execution ({} rows)", label, sub_t.elapsed().as_secs_f64() * 1000.0, res.row_count);
+                            let mut results = aux_results.lock().unwrap();
+                            results.push((label, res));
+                        }
+                    }
+                });
+                handles.push(handle);
             }
+
+            for handle in handles {
+                let _ = handle.join();
+            }
+
+            let locked_res = aux_results.lock().unwrap();
+            auxiliary_results = locked_res.clone();
+            info!("Step 5c [Fan-Out Parallel Swarm] ({:.2} ms): All {} cross-domain sub-agent tasks joined successfully.", t_fanout.elapsed().as_secs_f64() * 1000.0, auxiliary_results.len());
         }
 
         // Step 6: Visualization Selection Agent
