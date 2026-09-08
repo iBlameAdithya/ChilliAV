@@ -1,10 +1,23 @@
-use chilli_analytics::{AnalyticsMultiAgentOrchestrator, DashboardRenderer};
+use chilli_analytics::{AnalyticsMultiAgentOrchestrator, ApiServer, DashboardRenderer};
+use std::env;
 use std::path::Path;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing subscriber for clean pipeline logs
     tracing_subscriber::fmt::init();
+
+    let args: Vec<String> = env::args().collect();
+    let run_cli = args.iter().any(|arg| arg == "--cli");
+
+    if !run_cli {
+        let port: u16 = env::var("PORT")
+            .unwrap_or_else(|_| "8080".to_string())
+            .parse()
+            .unwrap_or(8080);
+        ApiServer::run(port).await?;
+        return Ok(());
+    }
 
     println!("==========================================================================================");
     println!("     AGENTIC ANALYTICS PLATFORM FOR ENTERPRISE APPLICATIONS USING MCP & MULTI-AGENT AI    ");
@@ -44,3 +57,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nAll 3 core scenarios executed successfully through the 8 AI agents and MCP Data Access Layer!");
     Ok(())
 }
+

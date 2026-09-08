@@ -7,6 +7,9 @@ use crate::db_mcp::EnterpriseDbManager;
 use crate::models::{DashboardSpec, RootCauseAnalysis, SqlExecutionResult};
 use tracing::info;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalyticsResult {
     pub dashboard: DashboardSpec,
     pub root_cause: RootCauseAnalysis,

@@ -40,4 +40,6 @@ crossterm = "0.27"
 ratatui = "0.26"
 indicatif = "0.17"
 regex = "1.10"
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
 
