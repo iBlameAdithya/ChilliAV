@@ -1,0 +1,28 @@
+[package]
+name = "chilli-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chilli-policy = { path = "../chilli-policy" }
+chilli-sandbox = { path = "../chilli-sandbox" }
+chilli-memory = { path = "../chilli-memory" }
+chilli-tools = { path = "../chilli-tools" }
+chilli-model = { path = "../chilli-model" }
+chilli-repo-intel = { path = "../chilli-repo-intel" }
+chilli-context = { path = "../chilli-context" }
+chilli-orchestrator = { path = "../chilli-orchestrator" }
+chilli-verification = { path = "../chilli-verification" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+async-trait.workspace = true
+tokio-stream.workspace = true
+tempfile.workspace = true
+
+[dev-dependencies]
+chilli-mcp = { path = "../chilli-mcp" }
+rusqlite = { workspace = true }
+

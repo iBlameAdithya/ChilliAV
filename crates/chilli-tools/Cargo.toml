@@ -1,0 +1,20 @@
+[package]
+name = "chilli-tools"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+walkdir.workspace = true
+tokio.workspace = true
+chilli-policy = { path = "../chilli-policy" }
+chilli-sandbox = { path = "../chilli-sandbox" }
+chilli-repo-intel = { path = "../chilli-repo-intel" }
+
+[dev-dependencies]
+tempfile.workspace = true
+

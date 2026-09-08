@@ -1,0 +1,31 @@
+# Generated build artifacts
+/target/
+/target
+*.pdb
+
+# Environment & Secret files
+.env
+.env.*
+.env_*
+*.pem
+*.key
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.user
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Platform runtime & logs
+/.chilli/
+*.log
+
+# Generated test output dashboards
+scenario*_*.html
+

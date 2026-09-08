@@ -1,0 +1,16 @@
+[package]
+name = "chilli-mcp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+chilli-policy = { path = "../chilli-policy" }
+chilli-tools = { path = "../chilli-tools" }
+
+[dev-dependencies]
+tempfile = { workspace = true }

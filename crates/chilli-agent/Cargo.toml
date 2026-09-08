@@ -1,0 +1,13 @@
+[package]
+name = "chilli-agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+chilli-core = { path = "../chilli-core" }
+chilli-model = { path = "../chilli-model" }
+chilli-context = { path = "../chilli-context" }

@@ -1,0 +1,17 @@
+[package]
+name = "chilli-orchestrator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tempfile = { workspace = true }
+chilli-model = { path = "../chilli-model" }
+chilli-context = { path = "../chilli-context" }
+chilli-sandbox = { path = "../chilli-sandbox" }
+
+[dev-dependencies]
+chilli-agent = { path = "../chilli-agent" }
