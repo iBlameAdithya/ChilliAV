@@ -223,6 +223,7 @@ async fn test_end_to_end_scenario_1_lead_distribution() {
     assert_eq!(result.dashboard.widgets[0].viz_type, ChartType::PieChart);
     assert!(result.dashboard.widgets[0].data.row_count > 0);
     assert!(!result.dashboard.recommendations.is_empty());
+    assert!(result.audit_proof.starts_with("blake3:"));
 }
 
 #[tokio::test]
