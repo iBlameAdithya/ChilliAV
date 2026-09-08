@@ -12,12 +12,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !run_cli {
         let port: u16 = env::var("PORT")
-            .unwrap_or_else(|_| "8080".to_string())
+            .unwrap_or_else(|_| "8000".to_string())
             .parse()
-            .unwrap_or(8080);
+            .unwrap_or(8000);
         ApiServer::run(port).await?;
         return Ok(());
     }
+
 
     println!("==========================================================================================");
     println!("     AGENTIC ANALYTICS PLATFORM FOR ENTERPRISE APPLICATIONS USING MCP & MULTI-AGENT AI    ");

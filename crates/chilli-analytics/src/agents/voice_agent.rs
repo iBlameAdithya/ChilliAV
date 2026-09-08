@@ -19,7 +19,7 @@ impl VoiceProcessingAgent {
             return (trimmed.to_string(), false);
         }
 
-        // Clean speech transcripts: remove filler words, normalize spoken terms
+        // Clean speech transcripts: remove filler words, normalize spoken terms and enterprise domain jargon
         let cleaned = trimmed
             .replace("um", "")
             .replace("uh", "")
@@ -27,7 +27,9 @@ impl VoiceProcessingAgent {
             .replace("can you display", "Show")
             .replace("dist", "distribution")
             .replace("last year", "for the last year")
-            .replace("this mth", "this month");
+            .replace("this mth", "this month")
+            .replace("SK U hundred", "SKU-100")
+            .replace("SKU hundred", "SKU-100");
 
         // Format casing
         let mut chars = cleaned.chars();

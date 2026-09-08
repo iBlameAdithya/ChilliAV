@@ -8,6 +8,7 @@ pub enum EnterpriseDomain {
     HRMS,
     ECommerce,
     CrossDomain,
+    Unknown,
 }
 
 impl std::fmt::Display for EnterpriseDomain {
@@ -18,6 +19,7 @@ impl std::fmt::Display for EnterpriseDomain {
             EnterpriseDomain::HRMS => write!(f, "HRMS"),
             EnterpriseDomain::ECommerce => write!(f, "E-Commerce"),
             EnterpriseDomain::CrossDomain => write!(f, "Cross-Domain Enterprise"),
+            EnterpriseDomain::Unknown => write!(f, "Unknown / Out-of-Domain"),
         }
     }
 }

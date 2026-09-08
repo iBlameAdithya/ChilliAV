@@ -1,4 +1,5 @@
 use crate::models::SchemaMetadata;
+use chilli_policy::credential_filter::mask_credentials;
 use thiserror::Error;
 use tracing::info;
 
@@ -13,7 +14,7 @@ pub enum SqlValidationError {
 }
 
 /// SQL Validation Agent
-/// Validates SQL queries for security, read-only access, schema alignment, and syntax correctness
+/// Validates SQL queries for security, read-only access, schema alignment, credential masking, and syntax correctness
 pub struct SqlValidationAgent;
 
 impl SqlValidationAgent {
@@ -26,8 +27,10 @@ impl SqlValidationAgent {
         sql: &str,
         _schema: &SchemaMetadata,
     ) -> Result<String, SqlValidationError> {
-        info!("SqlValidationAgent: Validating SQL query: '{}'", sql);
-        let trimmed = sql.trim();
+        // Phase 5: Credential masking on incoming prompt / query
+        let sanitized_input = mask_credentials(sql);
+        info!("SqlValidationAgent: Validating SQL query: '{}'", sanitized_input);
+        let trimmed = sanitized_input.trim();
         let upper = trimmed.to_uppercase();
 
         // 1. Reject DDL / DML write operations
@@ -37,6 +40,7 @@ impl SqlValidationAgent {
 
         for kw in forbidden {
             if upper.contains(kw) {
+                info!("Security Policy Violation: Blocked illegal SQL mutation keyword '{}'", kw.trim());
                 return Err(SqlValidationError::MutationNotAllowed(kw.trim().to_string()));
             }
         }

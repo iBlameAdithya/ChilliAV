@@ -10,15 +10,15 @@ This document outlines the detailed technical roadmap for the **Backend Team**. 
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│ PHASE 1: HTTP REST API & Frontend Integration Server (Axum / CORS)           [IN PROGRESS]│
+│ PHASE 1: HTTP REST API & Frontend Integration Server (Axum / CORS)           [COMPLETED] │
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
-│ PHASE 2: Live LLM Integration & Dynamic Text-to-SQL (chilli-model)             [UPCOMING]│
+│ PHASE 2: Live LLM Integration & Dynamic Text-to-SQL (chilli-model)           [COMPLETED] │
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
-│ PHASE 3: Production MCP Database Connectors (Postgres/MySQL/Snowflake)         [UPCOMING]│
+│ PHASE 3: Production MCP Database Connectors (Postgres/MySQL/Snowflake)       [COMPLETED] │
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
-│ PHASE 4: Real-time Audio Speech-to-Text Pipeline (Whisper API)                 [UPCOMING]│
+│ PHASE 4: Real-time Audio Speech-to-Text Pipeline (Voice API Endpoint)        [COMPLETED] │
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
-│ PHASE 5: Enterprise Security, Rate Limiting & Audit Logging                    [UPCOMING]│
+│ PHASE 5: Enterprise Security, Rate Limiting & Audit Logging                  [COMPLETED] │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 

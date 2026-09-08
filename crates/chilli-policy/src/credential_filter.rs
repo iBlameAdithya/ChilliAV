@@ -6,7 +6,8 @@ static PATTERNS: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
 fn get_patterns() -> &'static Vec<(Regex, &'static str)> {
     PATTERNS.get_or_init(|| {
         vec![
-            // OpenAI / Anthropic API keys
+            // OpenAI / Anthropic / Groq API keys
+            (Regex::new(r"(?i)gsk_[a-zA-Z0-9_\-]{20,}").unwrap(), "[REDACTED_GROQ_KEY]"),
             (Regex::new(r"(?i)sk-ant-[a-zA-Z0-9_\-]{20,}").unwrap(), "[REDACTED_ANTHROPIC_KEY]"),
             (Regex::new(r"(?i)sk-[a-zA-Z0-9_\-]{20,}").unwrap(), "[REDACTED_API_KEY]"),
 

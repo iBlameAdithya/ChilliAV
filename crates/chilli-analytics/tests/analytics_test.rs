@@ -76,3 +76,46 @@ fn test_scenario_3_root_cause_analysis() {
     assert!(!result.root_cause.contributing_factors.is_empty());
     assert!(!result.root_cause.actionable_recommendations.is_empty());
 }
+
+#[tokio::test]
+async fn test_mcp_database_tool_execution() {
+    let db_mgr = EnterpriseDbManager::new_in_memory().unwrap();
+    let tools = db_mgr.mcp_list_tools();
+    assert_eq!(tools.tools.len(), 2);
+
+    let call_params = chilli_mcp::protocol::McpCallToolParams {
+        name: "mcp_enterprise_execute_sql".to_string(),
+        arguments: Some(serde_json::json!({
+            "sql": "SELECT COUNT(*) FROM sales_orders"
+        })),
+    };
+
+    let result = db_mgr.mcp_call_tool(call_params).unwrap();
+    assert!(!result.is_error);
+    assert_eq!(result.content.len(), 1);
+}
+
+#[test]
+fn test_phase_3_schema_caching_and_read_only_guard() {
+    let db_mgr = EnterpriseDbManager::new_in_memory().unwrap();
+    assert!(db_mgr.provider_type().contains("SQLite"));
+
+    // 1. Schema discovery cached
+    let schema1 = db_mgr.discover_schema().unwrap();
+    let schema2 = db_mgr.discover_schema().unwrap();
+    assert_eq!(schema1.tables.len(), schema2.tables.len());
+
+    // 2. Read-only guard execution error test
+    let mutation_result = db_mgr.execute_sql("INSERT INTO crm_leads (contact_name, company, status, estimated_value, assigned_agent, created_month) VALUES ('Hacker', 'X', 'New', 0, 'Y', '2026-09')");
+    assert!(mutation_result.is_err(), "PRAGMA query_only = ON; should block direct mutation");
+}
+
+#[test]
+fn test_phase_3_postgres_mcp_connector() {
+    let pg_db = EnterpriseDbManager::new_postgres("postgresql://user:pass@localhost:5432/enterprise_db".to_string());
+    assert_eq!(pg_db.provider_type(), "PostgreSQL (External MCP Server)");
+
+    let schema = pg_db.discover_schema().unwrap();
+    assert_eq!(schema.tables.len(), 4);
+}
+

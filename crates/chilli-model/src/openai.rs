@@ -128,7 +128,8 @@ impl OpenAIAdapter {
             && (lower.starts_with("llama")
                 || lower.starts_with("mixtral")
                 || lower.starts_with("gemma")
-                || lower.starts_with("deepseek"))
+                || lower.starts_with("deepseek")
+                || lower.starts_with("qwen"))
             && (env::var("GROQ_API_KEY").is_ok()
                 || (env::var("OPENROUTER_API_KEY").is_err()
                     && env::var("FIREWORKS_API_KEY").is_err()
@@ -248,7 +249,8 @@ impl OpenAIAdapter {
             && (lower.starts_with("llama")
                 || lower.starts_with("mixtral")
                 || lower.starts_with("gemma")
-                || lower.starts_with("deepseek"))
+                || lower.starts_with("deepseek")
+                || lower.starts_with("qwen"))
         {
             let groq_key = env::var("GROQ_API_KEY").unwrap_or_default();
             let base_url = env::var("GROQ_BASE_URL")

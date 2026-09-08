@@ -5,6 +5,7 @@ use crate::agents::{
 };
 use crate::db_mcp::EnterpriseDbManager;
 use crate::models::{DashboardSpec, RootCauseAnalysis, SqlExecutionResult};
+use std::time::Instant;
 use tracing::info;
 
 use serde::{Deserialize, Serialize};
@@ -50,30 +51,42 @@ impl AnalyticsMultiAgentOrchestrator {
         raw_query: &str,
         is_voice: bool,
     ) -> Result<AnalyticsResult, Box<dyn std::error::Error>> {
+        let overall_start = Instant::now();
         info!("--- STARTING MULTI-AGENT ANALYTICS PIPELINE ---");
 
         // Step 1: Voice Processing Agent
+        let t1 = Instant::now();
         let (clean_query, is_voice_processed) = self.voice_agent.process_input(raw_query, is_voice);
-        info!("Step 1 [Voice Processing Agent]: Transcribed text: '{}'", clean_query);
+        info!("Step 1 [Voice Processing Agent] ({:.2} ms): Transcribed text: '{}'", t1.elapsed().as_secs_f64() * 1000.0, clean_query);
 
         // Step 2: Intent Understanding Agent
+        let t2 = Instant::now();
         let intent = self.intent_agent.analyze_intent(&clean_query, is_voice_processed);
-        info!("Step 2 [Intent Understanding Agent]: Intent domain: {:?}, query type: {:?}", intent.domain, intent.query_type);
+        info!("Step 2 [Intent Understanding Agent] ({:.2} ms): Intent domain: {:?}, query type: {:?}", t2.elapsed().as_secs_f64() * 1000.0, intent.domain, intent.query_type);
+
+        if intent.domain == crate::models::EnterpriseDomain::Unknown {
+            info!("Intent Understanding Agent: Query is irrelevant to available enterprise datasets.");
+            return Err("Not enough data to be processed".into());
+        }
 
         // Step 3: Schema Discovery Agent (via MCP)
+        let t3 = Instant::now();
         let schema = self.schema_agent.discover_relevant_schema(&intent, &self.db_manager)?;
-        info!("Step 3 [Schema Discovery Agent]: Discovered {} tables", schema.tables.len());
+        info!("Step 3 [Schema Discovery Agent] ({:.2} ms): Discovered {} tables", t3.elapsed().as_secs_f64() * 1000.0, schema.tables.len());
 
         // Step 4: SQL Generation Agent
+        let t4 = Instant::now();
         let sql_payload = self.sql_gen_agent.generate_sql(&intent, &schema)?;
-        info!("Step 4 [SQL Generation Agent]: Generated Primary SQL: '{}'", sql_payload.primary_sql);
+        info!("Step 4 [SQL Generation Agent] ({:.2} ms): Generated Primary SQL: '{}'", t4.elapsed().as_secs_f64() * 1000.0, sql_payload.primary_sql);
 
         // Step 5: SQL Validation Agent
+        let t5 = Instant::now();
         let validated_primary_sql = self.sql_val_agent.validate_sql(&sql_payload.primary_sql, &schema)?;
-        info!("Step 5 [SQL Validation Agent]: Primary SQL query validated successfully.");
+        info!("Step 5 [SQL Validation Agent] ({:.2} ms): Primary SQL query validated successfully.", t5.elapsed().as_secs_f64() * 1000.0);
 
+        let t5b = Instant::now();
         let primary_result = self.db_manager.execute_sql(&validated_primary_sql)?;
-        info!("Step 5b [Data Execution Layer]: Executed query, retrieved {} rows", primary_result.row_count);
+        info!("Step 5b [Data Execution Layer] ({:.2} ms): Executed query, retrieved {} rows", t5b.elapsed().as_secs_f64() * 1000.0, primary_result.row_count);
 
         let mut auxiliary_results: Vec<(String, SqlExecutionResult)> = Vec::new();
         for (label, aux_sql) in sql_payload.auxiliary_sqls {
@@ -85,26 +98,31 @@ impl AnalyticsMultiAgentOrchestrator {
         }
 
         // Step 6: Visualization Selection Agent
+        let t6 = Instant::now();
         let viz_config = self.viz_agent.select_visualization(&intent, &primary_result);
-        info!("Step 6 [Visualization Selection Agent]: Selected Chart Type: {}", viz_config.chart_type);
+        info!("Step 6 [Visualization Selection Agent] ({:.2} ms): Selected Chart Type: {}", t6.elapsed().as_secs_f64() * 1000.0, viz_config.chart_type);
 
         // Step 7: Dashboard Generation Agent
+        let t7 = Instant::now();
         let mut dashboard = self.dashboard_agent.generate_dashboard(
             &intent,
             viz_config,
             primary_result,
             auxiliary_results,
         );
-        info!("Step 7 [Dashboard Generation Agent]: Assembled Dashboard Spec '{}' with {} widgets", dashboard.title, dashboard.widgets.len());
+        info!("Step 7 [Dashboard Generation Agent] ({:.2} ms): Assembled Dashboard Spec '{}' with {} widgets", t7.elapsed().as_secs_f64() * 1000.0, dashboard.title, dashboard.widgets.len());
 
         // Step 8: Insight & Recommendation Agent
+        let t8 = Instant::now();
         let root_cause = self.insight_agent.generate_insights(&intent, &mut dashboard);
-        info!("Step 8 [Insight & Recommendation Agent]: Generated executive summary and {} recommendations", dashboard.recommendations.len());
+        info!("Step 8 [Insight & Recommendation Agent] ({:.2} ms): Generated executive summary and {} recommendations", t8.elapsed().as_secs_f64() * 1000.0, dashboard.recommendations.len());
 
-        info!("--- MULTI-AGENT ANALYTICS PIPELINE COMPLETE ---");
+        let total_ms = overall_start.elapsed().as_secs_f64() * 1000.0;
+        info!("--- MULTI-AGENT ANALYTICS PIPELINE COMPLETE (Total Latency: {:.2} ms) ---", total_ms);
         Ok(AnalyticsResult {
             dashboard,
             root_cause,
         })
     }
 }
+

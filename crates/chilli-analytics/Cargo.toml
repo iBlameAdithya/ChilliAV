@@ -10,6 +10,7 @@ chilli-agent = { path = "../chilli-agent" }
 chilli-orchestrator = { path = "../chilli-orchestrator" }
 chilli-mcp = { path = "../chilli-mcp" }
 chilli-model = { path = "../chilli-model" }
+chilli-policy = { path = "../chilli-policy" }
 
 tokio = { workspace = true }
 serde = { workspace = true }
@@ -23,6 +24,11 @@ regex = { workspace = true }
 axum = { workspace = true }
 tower-http = { workspace = true }
 
+[dev-dependencies]
+tower = { workspace = true }
+http-body-util = "0.1"
+
 [[bin]]
 name = "chilli-analytics"
 path = "src/main.rs"
+
