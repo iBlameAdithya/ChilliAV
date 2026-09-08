@@ -4,7 +4,8 @@ use crate::agents::{
     VoiceProcessingAgent,
 };
 use crate::db_mcp::EnterpriseDbManager;
-use crate::models::{DashboardSpec, RootCauseAnalysis, SqlExecutionResult};
+use crate::llm_integration::LlmAnalyticsRouter;
+use crate::models::{DashboardSpec, EnterpriseDomain, RootCauseAnalysis, SqlExecutionResult};
 use chilli_policy::proof::generate_execution_proof;
 use std::time::Instant;
 use tracing::info;
@@ -60,12 +61,14 @@ pub struct AnalyticsMultiAgentOrchestrator {
     viz_agent: VisualizationSelectionAgent,
     dashboard_agent: DashboardGenerationAgent,
     insight_agent: InsightAndRecommendationAgent,
+    llm_router: LlmAnalyticsRouter,
     db_manager: EnterpriseDbManager,
 }
 
 impl AnalyticsMultiAgentOrchestrator {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let db_manager = EnterpriseDbManager::new_in_memory()?;
+        let llm_router = LlmAnalyticsRouter::from_env();
         Ok(Self {
             voice_agent: VoiceProcessingAgent::new(),
             intent_agent: IntentUnderstandingAgent::new(),
@@ -75,6 +78,7 @@ impl AnalyticsMultiAgentOrchestrator {
             viz_agent: VisualizationSelectionAgent::new(),
             dashboard_agent: DashboardGenerationAgent::new(),
             insight_agent: InsightAndRecommendationAgent::new(),
+            llm_router,
             db_manager,
         })
     }
@@ -99,12 +103,39 @@ impl AnalyticsMultiAgentOrchestrator {
         loop_guard.tick("Step 2: Intent Understanding")?;
         let t2 = Instant::now();
         info!("⚡ [Speculative Swarm Engine]: Pre-warming domain index routing...");
-        let intent = self.intent_agent.analyze_intent(&clean_query, is_voice_processed);
+        let mut intent = self.intent_agent.analyze_intent(&clean_query, is_voice_processed);
         info!("Step 2 [Intent Understanding Agent] ({:.2} ms): Intent domain: {:?}, query type: {:?}", t2.elapsed().as_secs_f64() * 1000.0, intent.domain, intent.query_type);
 
-        if intent.domain == crate::models::EnterpriseDomain::Unknown {
-            info!("Intent Understanding Agent: Query is irrelevant to available enterprise datasets.");
-            return Err("Not enough data to be processed".into());
+        let mut override_sql: Option<String> = None;
+
+        // Fallback: If local intent rules return Unknown, trigger the LLM Router for zero-shot intent & SQL resolution
+        if intent.domain == EnterpriseDomain::Unknown {
+            info!("⚡ [LLM Router Fallback]: Fast-path intent returned Unknown. Invoking LLM zero-shot router...");
+            let schema_meta = self.db_manager.discover_schema().unwrap_or_else(|_| crate::models::SchemaMetadata { tables: vec![] });
+
+            // Execute synchronous block over tokio handle or runtime block
+            let rt = tokio::runtime::Handle::try_current();
+            let llm_res = match rt {
+                Ok(handle) => tokio::task::block_in_place(|| {
+                    handle.block_on(self.llm_router.resolve_unknown_query(&clean_query, &schema_meta))
+                }),
+                Err(_) => {
+                    let new_rt = tokio::runtime::Runtime::new()?;
+                    new_rt.block_on(self.llm_router.resolve_unknown_query(&clean_query, &schema_meta))
+                }
+            };
+
+            match llm_res {
+                Ok((resolved_intent, gen_sql)) => {
+                    info!("⚡ [LLM Router Fallback]: Resolved intent to domain {:?}, generated SQL: '{}'", resolved_intent.domain, gen_sql);
+                    intent = resolved_intent;
+                    override_sql = Some(gen_sql);
+                }
+                Err(err) => {
+                    info!("LLM Router Fallback could not resolve query: {}", err);
+                    return Err("Not enough data to be processed".into());
+                }
+            }
         }
 
         // Step 3: Schema Discovery Agent (via MCP)
@@ -116,7 +147,14 @@ impl AnalyticsMultiAgentOrchestrator {
         // Step 4: SQL Generation Agent
         loop_guard.tick("Step 4: SQL Generation")?;
         let t4 = Instant::now();
-        let sql_payload = self.sql_gen_agent.generate_sql(&intent, &schema)?;
+        let sql_payload = if let Some(custom_sql) = override_sql {
+            crate::agents::sql_gen_agent::GeneratedSqlPayload {
+                primary_sql: custom_sql,
+                auxiliary_sqls: vec![],
+            }
+        } else {
+            self.sql_gen_agent.generate_sql(&intent, &schema)?
+        };
         info!("Step 4 [SQL Generation Agent] ({:.2} ms): Generated Primary SQL: '{}'", t4.elapsed().as_secs_f64() * 1000.0, sql_payload.primary_sql);
 
         // Step 5: SQL Validation & Data Execution (Fan-Out Agent Pattern)
