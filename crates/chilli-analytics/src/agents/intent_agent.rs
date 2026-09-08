@@ -12,9 +12,32 @@ impl IntentUnderstandingAgent {
 
     pub fn analyze_intent(&self, input: &str, is_voice: bool) -> QueryIntent {
         info!("IntentUnderstandingAgent: Analyzing intent for: '{}'", input);
-        let query_lower = input.to_lowercase();
+        let query_lower = input.trim().to_lowercase();
 
-        // Detect Root-Cause Analysis (Scenario 3 & Variations)
+        // 1. Guard against SQL Injection / Destructive Attacks
+        if query_lower.contains("drop ")
+            || query_lower.contains("delete ")
+            || query_lower.contains("update ")
+            || query_lower.contains("insert ")
+            || query_lower.contains("alter ")
+            || query_lower.contains("truncate ")
+            || query_lower.contains("--")
+            || query_lower.contains("/*")
+        {
+            info!("Security Alert: Malicious SQL injection attempt detected in natural language input.");
+            return QueryIntent {
+                raw_query: input.to_string(),
+                is_voice_input: is_voice,
+                domain: EnterpriseDomain::Unknown,
+                query_type: QueryType::Aggregation,
+                target_entities: vec![],
+                metrics: vec![],
+                time_horizon: None,
+                filter_conditions: vec![],
+            };
+        }
+
+        // 2. Detect Root-Cause Analysis (Scenario 3 & Variations)
         if query_lower.contains("why did")
             || query_lower.contains("why sales")
             || query_lower.contains("why revenue")
@@ -39,7 +62,7 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // Detect Sales Trend (Scenario 2 & Variations: "by month", "12 months", "sales orders", "revenue")
+        // 3. Detect Sales Trend & Revenue (Scenario 2 & Variations)
         if query_lower.contains("trend")
             || query_lower.contains("monthly sales")
             || query_lower.contains("sales orders")
@@ -51,6 +74,11 @@ impl IntentUnderstandingAgent {
             || query_lower.contains("6 months")
             || query_lower.contains("growth rate")
             || query_lower.contains("sales performance")
+            || query_lower.contains("sales")
+            || query_lower.contains("revenue")
+            || query_lower.contains("order")
+            || query_lower.contains("region")
+            || query_lower.contains("amount")
         {
             return QueryIntent {
                 raw_query: input.to_string(),
@@ -64,7 +92,7 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // Detect ERP Inventory / Stock Queries
+        // 4. Detect ERP Inventory / Stock Queries
         if query_lower.contains("stock")
             || query_lower.contains("inventory")
             || query_lower.contains("product")
@@ -85,7 +113,7 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // Detect HRMS or General Employee Queries
+        // 5. Detect HRMS or General Employee Queries
         if query_lower.contains("employee")
             || query_lower.contains("salary")
             || query_lower.contains("performance")
@@ -108,7 +136,7 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // Detect Top Customers / Companies (CRM Domain)
+        // 6. Detect Top Customers / Companies (CRM Domain)
         if query_lower.contains("top")
             || query_lower.contains("customer")
             || query_lower.contains("company")
@@ -129,7 +157,7 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // Detect CRM Lead Distribution (Scenario 1)
+        // 7. Detect CRM Lead Distribution (Scenario 1)
         if query_lower.contains("lead status")
             || query_lower.contains("lead distribution")
             || query_lower.contains("crm")
@@ -150,17 +178,18 @@ impl IntentUnderstandingAgent {
             };
         }
 
-        // Default Fallback: General Enterprise Aggregation
+        // 8. Out-of-Domain / Irrelevant / Gibberish Query Protection
         QueryIntent {
             raw_query: input.to_string(),
             is_voice_input: is_voice,
-            domain: EnterpriseDomain::ECommerce,
+            domain: EnterpriseDomain::Unknown,
             query_type: QueryType::Aggregation,
-            target_entities: vec!["sales_orders".to_string()],
-            metrics: vec!["amount".to_string()],
+            target_entities: vec![],
+            metrics: vec![],
             time_horizon: None,
             filter_conditions: vec![],
         }
     }
 }
+
 
